@@ -1,14 +1,10 @@
-
-export default function DashboardPage() {
+export default function AdminDashboard() {
   return (
-    <div className="container mx-auto py-6 space-y-6">
-      <h1 className="text-2xl font-semibold">Dashboard</h1>
-
-    
-
-      <div className="container mx-auto py-10">
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+        <p className="text-muted-foreground">Welcome to the admin panel</p>
       </div>
     </div>
   )
 }
-

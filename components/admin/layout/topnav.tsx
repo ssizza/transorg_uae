@@ -7,12 +7,13 @@ import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { ThemeToggle } from "./theme-toggle"
+import { logout } from "@/lib/actions/auth"
+import { useRouter } from "next/navigation"
+import { useTransition } from "react"
 
 interface BreadcrumbItem {
   label: string
@@ -21,32 +22,24 @@ interface BreadcrumbItem {
 
 interface TopNavProps {
   breadcrumbs?: BreadcrumbItem[]
-  user?: {
-    name: string
-    email: string
-    avatar?: string
-  }
+  email: string
 }
 
-export function TopNav({
-  breadcrumbs = [{ label: "Dashboard" }],
-  user = {
-    name: "Admin User",
-    email: "admin@example.com",
-    avatar: "/placeholder.svg?height=32&width=32",
-  },
-}: TopNavProps) {
-  const handleLogout = () => {
-    // Add your logout logic here
-    console.log("Logout clicked")
-  }
+export function TopNav({ breadcrumbs = [{ label: "Dashboard" }], email }: TopNavProps) {
+  const router = useRouter()
+  const [isPending, startTransition] = useTransition()
 
-  const getInitials = (name: string) => {
-    return name
-      .split(" ")
-      .map((n) => n[0])
-      .join("")
-      .toUpperCase()
+  const handleLogout = async () => {
+    startTransition(async () => {
+      try {
+        await logout()
+        // Redirect is handled by the logout action
+      } catch (error) {
+        console.error("[Logout Error]", error)
+        // Fallback redirect if action fails
+        router.push("/authentication/login")
+      }
+    })
   }
 
   return (
@@ -81,24 +74,16 @@ export function TopNav({
         {/* Theme Toggle */}
         <ThemeToggle />
 
-        {/* User Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="relative h-8 w-8 rounded-full">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={user.avatar || "/placeholder.svg"} alt={user.name} />
-                <AvatarFallback className="bg-blue-600 text-white text-xs">{getInitials(user.name)}</AvatarFallback>
-              </Avatar>
+            <Button
+              variant="ghost"
+              className="text-sm text-gray-600 dark:text-gray-300 hover:text-gray-900 dark:hover:text-white"
+            >
+              {email}
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent className="w-56" align="end" forceMount>
-            <DropdownMenuLabel className="font-normal">
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user.name}</p>
-                <p className="text-xs leading-none text-muted-foreground">{user.email}</p>
-              </div>
-            </DropdownMenuLabel>
-            <DropdownMenuSeparator />
             <DropdownMenuItem asChild>
               <Link href="/admin/profile">Profile</Link>
             </DropdownMenuItem>
@@ -106,7 +91,9 @@ export function TopNav({
               <Link href="/admin/settings">Settings</Link>
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={handleLogout}>Log out</DropdownMenuItem>
+            <DropdownMenuItem onClick={handleLogout} disabled={isPending}>
+              {isPending ? "Logging out..." : "Log out"}
+            </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
