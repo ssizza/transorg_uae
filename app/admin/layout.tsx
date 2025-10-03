@@ -4,7 +4,7 @@ import { redirect } from "next/navigation"
 import { cn } from "@/lib/utils"
 import { Sidebar } from "@/components/admin/layout/sidebar"
 import TopNav from "@/components/admin/layout/topnav"
-import { ThemeProvider } from "@/components/theme-provider"
+import { ThemeProvider } from "@/components/admin/layout/theme-provider"
 import { getSession } from "@/lib/auth/session"
 
 const inter = Inter({ subsets: ["latin"] })
