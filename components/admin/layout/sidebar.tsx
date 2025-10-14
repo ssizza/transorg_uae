@@ -10,7 +10,6 @@ import {
   Menu,
   Home,
   Gift,
-  DollarSign,
   X,
   Star,
   Calendar,
@@ -21,13 +20,28 @@ import {
 } from "lucide-react"
 
 import Link from "next/link"
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { usePathname } from "next/navigation"
 import { cn } from "@/lib/utils"
+import { getSiteBrandingAction } from "@/lib/actions/system-settings"
+import Image from "next/image"
 
 export function Sidebar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+  const [siteName, setSiteName] = useState("Admin Panel")
+  const [logoData, setLogoData] = useState<string | null>(null)
   const pathname = usePathname()
+
+  useEffect(() => {
+    async function fetchBranding() {
+      const result = await getSiteBrandingAction()
+      if (result.success && result.data) {
+        setSiteName(result.data.siteName)
+        setLogoData(result.data.logoData)
+      }
+    }
+    fetchBranding()
+  }, [])
 
   function handleNavigation() {
     setIsMobileMenuOpen(false)
@@ -88,10 +102,22 @@ export function Sidebar() {
           {/* Header */}
           <div className="h-16 px-6 flex items-center justify-between border-b border-gray-200 dark:border-[#1F1F23]">
             <Link href="/admin" className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-                <DollarSign className="w-5 h-5 text-white" />
-              </div>
-              <span className="text-lg font-semibold text-gray-900 dark:text-white">FiscalSponsor</span>
+              {logoData ? (
+                <div className="w-8 h-8 rounded-lg overflow-hidden flex items-center justify-center">
+                  <Image
+                    src={logoData || "/placeholder.svg"}
+                    alt={siteName}
+                    width={32}
+                    height={32}
+                    className="object-contain"
+                  />
+                </div>
+              ) : (
+                <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-sm">{siteName.charAt(0).toUpperCase()}</span>
+                </div>
+              )}
+              <span className="text-lg font-semibold text-gray-900 dark:text-white">{siteName}</span>
             </Link>
             <button
               type="button"
