@@ -1,0 +1,387 @@
+# Media Management System
+
+A comprehensive media management system for Next.js applications with folder organization, 
+file uploads, search functionality, and a flexible media picker component. Designed By Rodhni Kiggund 
+rdssizza@gmail.com 
+
+## 📋 Table of Contents
+
+- [Usage Methods](#usage-methods)
+- [API Reference](#api-reference)
+- [Components](#components)
+- [Examples](#examples)
+- [Configuration](#configuration)
+
+
+
+## 📖 Usage Methods
+
+There are **three main ways** to use the media picker in your application:
+
+### Method 1: MediaPickerButton Component (Recommended)
+
+The simplest way to add media selection to any component.
+
+\`\`\`tsx
+import { MediaPickerButton } from "@/components/admin/media/media-picker-button"
+import { useState } from "react"
+import type { MediaFile } from "@/components/admin/media/media-management"
+
+function MyComponent() {
+  const [selectedImage, setSelectedImage] = useState<MediaFile | null>(null)
+
+  return (
+    <div>
+      <MediaPickerButton 
+        fileType="image"
+        onSelect={(file) => setSelectedImage(file)}
+        title="Select Featured Image"
+      >
+        Choose Image
+      </MediaPickerButton>
+      
+      {selectedImage && (
+        <img src={selectedImage.file_url || "/placeholder.svg"} alt={selectedImage.title} />
+      )}
+    </div>
+  )
+}
+\`\`\`
+
+**Props:**
+- `onSelect: (file: MediaFile) => void` - Callback when file is selected
+- `fileType?: "image" | "video" | "all"` - Filter by file type (default: "all")
+- `title?: string` - Modal title
+- `multiple?: boolean` - Allow multiple selection (default: false)
+- `variant?: "default" | "outline" | "ghost"` - Button style
+- `size?: "sm" | "default" | "lg"` - Button size
+- `children?: React.ReactNode` - Custom button content
+
+### Method 2: useMediaPicker Hook
+
+For more control over when and how the picker opens.
+
+\`\`\`tsx
+import { useMediaPicker } from "@/components/admin/media/use-media-picker"
+import { Button } from "@/components/ui/button"
+import { useState } from "react"
+import type { MediaFile } from "@/components/admin/media/media-management"
+
+function BlogEditor() {
+  const [featuredImage, setFeaturedImage] = useState<MediaFile | null>(null)
+  const [galleryImages, setGalleryImages] = useState<MediaFile[]>([])
+
+  // Single image picker
+  const { openPicker: openImagePicker, MediaPicker: ImagePicker } = useMediaPicker({
+    fileType: "image",
+    title: "Select Featured Image"
+  })
+
+  // Multiple image picker
+  const { openPicker: openGalleryPicker, MediaPicker: GalleryPicker } = useMediaPicker({
+    fileType: "image",
+    title: "Select Gallery Images",
+    multiple: true
+  })
+
+  const handleFeaturedImageSelect = () => {
+    openImagePicker((file) => {
+      setFeaturedImage(file)
+      console.log("Selected:", file.file_url)
+    })
+  }
+
+  const handleGallerySelect = () => {
+    openGalleryPicker((file) => {
+      setGalleryImages(prev => [...prev, file])
+    })
+  }
+
+  return (
+    <div>
+      <Button onClick={handleFeaturedImageSelect}>
+        Select Featured Image
+      </Button>
+      
+      <Button onClick={handleGallerySelect}>
+        Add to Gallery
+      </Button>
+
+      {/* Render the pickers */}
+      <ImagePicker />
+      <GalleryPicker />
+    </div>
+  )
+}
+\`\`\`
+
+**Hook Options:**
+- `fileType?: "image" | "video" | "all"` - Filter by file type
+- `title?: string` - Modal title
+- `multiple?: boolean` - Allow multiple selection
+
+**Hook Returns:**
+- `openPicker: (onSelect: (file: MediaFile) => void) => void` - Function to open picker
+- `closePicker: () => void` - Function to close picker
+- `MediaPicker: React.Component` - Component to render the modal
+- `isOpen: boolean` - Current open state
+
+### Method 3: Direct Modal Usage
+
+For complete control over the modal behavior.
+
+\`\`\`tsx
+import { MediaPickerModal } from "@/components/admin/media/media-picker-modal"
+import { useState } from "react"
+import type { MediaFile } from "@/components/admin/media/media-management"
+
+function CustomComponent() {
+  const [isPickerOpen, setIsPickerOpen] = useState(false)
+  const [selectedFiles, setSelectedFiles] = useState<MediaFile[]>([])
+
+  const handleFileSelect = (file: MediaFile) => {
+    setSelectedFiles(prev => [...prev, file])
+    setIsPickerOpen(false)
+  }
+
+  return (
+    <div>
+      <button onClick={() => setIsPickerOpen(true)}>
+        Open Media Picker
+      </button>
+
+      <MediaPickerModal
+        open={isPickerOpen}
+        onOpenChange={setIsPickerOpen}
+        onSelect={handleFileSelect}
+        fileType="all"
+        title="Select Media Files"
+        multiple={true}
+      />
+    </div>
+  )
+}
+\`\`\`
+
+**Modal Props:**
+- `open: boolean` - Control modal visibility
+- `onOpenChange: (open: boolean) => void` - Handle modal state changes
+- `onSelect: (file: MediaFile) => void` - File selection callback
+- `fileType?: "image" | "video" | "all"` - File type filter
+- `title?: string` - Modal title
+- `multiple?: boolean` - Multiple selection mode
+
+## 🧩 Components
+
+### MediaFile Interface
+
+\`\`\`typescript
+interface MediaFile {
+  id: number
+  title: string
+  alt_text: string | null
+  file_name: string
+  file_path: string
+  file_url: string
+  file_type: "image" | "video"
+  file_size: number
+  mime_type: string
+  folder_id: number | null
+  is_used: boolean
+  usage_count: number
+  created_at: string
+  updated_at: string
+}
+\`\`\`
+
+### MediaFolder Interface
+
+\`\`\`typescript
+interface MediaFolder {
+  id: number
+  name: string
+  parent_id: number | null
+  level: number
+  path: string
+  created_at: string
+  updated_at: string
+  item_count?: number
+  size?: string
+}
+\`\`\`
+
+## 📝 Examples
+
+### Example 1: Blog Post Editor
+
+\`\`\`tsx
+import { MediaPickerButton } from "@/components/admin/media/media-picker-button"
+import { useState } from "react"
+
+function BlogPostEditor() {
+  const [featuredImage, setFeaturedImage] = useState("")
+  const [content, setContent] = useState("")
+
+  return (
+    <form>
+      <div>
+        <label>Featured Image</label>
+        <MediaPickerButton
+          fileType="image"
+          onSelect={(file) => setFeaturedImage(file.file_url)}
+          title="Select Featured Image"
+        />
+        {featuredImage && (
+          <img src={featuredImage || "/placeholder.svg"} alt="Featured" className="mt-2 w-32 h-32 object-cover" />
+        )}
+      </div>
+      
+      <div>
+        <label>Content</label>
+        <textarea 
+          value={content}
+          onChange={(e) => setContent(e.target.value)}
+          placeholder="Write your blog post..."
+        />
+      </div>
+    </form>
+  )
+}
+\`\`\`
+
+### Example 2: Product Gallery
+
+\`\`\`tsx
+import { useMediaPicker } from "@/components/admin/media/use-media-picker"
+import { useState } from "react"
+
+function ProductGallery() {
+  const [images, setImages] = useState<MediaFile[]>([])
+  
+  const { openPicker, MediaPicker } = useMediaPicker({
+    fileType: "image",
+    title: "Add Product Images",
+    multiple: true
+  })
+
+  const addImages = () => {
+    openPicker((file) => {
+      setImages(prev => [...prev, file])
+    })
+  }
+
+  const removeImage = (id: number) => {
+    setImages(prev => prev.filter(img => img.id !== id))
+  }
+
+  return (
+    <div>
+      <button onClick={addImages}>Add Images</button>
+      
+      <div className="grid grid-cols-4 gap-4 mt-4">
+        {images.map((image) => (
+          <div key={image.id} className="relative">
+            <img 
+              src={image.file_url || "/placeholder.svg"} 
+              alt={image.title}
+              className="w-full h-32 object-cover rounded"
+            />
+            <button 
+              onClick={() => removeImage(image.id)}
+              className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6"
+            >
+              ×
+            </button>
+          </div>
+        ))}
+      </div>
+      
+      <MediaPicker />
+    </div>
+  )
+}
+\`\`\`
+
+### Example 3: Video Background Selector
+
+\`\`\`tsx
+import { MediaPickerButton } from "@/components/admin/media/media-picker-button"
+
+function HeroSection() {
+  const [backgroundVideo, setBackgroundVideo] = useState("")
+
+  return (
+    <div>
+      <MediaPickerButton
+        fileType="video"
+        onSelect={(file) => setBackgroundVideo(file.file_url)}
+        title="Select Background Video"
+        variant="outline"
+      >
+        Choose Background Video
+      </MediaPickerButton>
+      
+      {backgroundVideo && (
+        <video 
+          src={backgroundVideo} 
+          autoPlay 
+          muted 
+          loop
+          className="w-full h-64 object-cover"
+        />
+      )}
+    </div>
+  )
+}
+\`\`\`
+
+## 🔧 Configuration
+
+### File Upload Settings
+
+Modify the upload settings in `app/api/admin/media/files/route.ts`:
+
+\`\`\`typescript
+// Maximum file size (in bytes)
+const MAX_FILE_SIZE = 100 * 1024 * 1024 // 100MB
+
+// Allowed file types
+const ALLOWED_IMAGE_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+const ALLOWED_VIDEO_TYPES = ['video/mp4', 'video/mov', 'video/avi', 'video/webm']
+\`\`\`
+
+### Database Configuration
+
+Update your database connection in `lib/db.ts`:
+
+\`\`\`typescript
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || "localhost",
+  port: parseInt(process.env.DB_PORT || "3306"),
+  user: process.env.DB_USER || "root",
+  password: process.env.DB_PASSWORD || "",
+  database: process.env.DB_NAME || "media_db",
+  waitForConnections: true,
+  connectionLimit: 10,
+  queueLimit: 0,
+})
+\`\`\`
+
+## 🧪 Testing
+
+Use the test component to verify functionality:
+
+\`\`\`tsx
+import { MediaPickerTest } from "@/components/admin/media/media-picker-test"
+
+// In your test page
+export default function TestPage() {
+  return (
+    <div className="container mx-auto py-6">
+      <h1>Media Picker Test</h1>
+      <MediaPickerTest />
+    </div>
+  )
+}
+\`\`\`
+
